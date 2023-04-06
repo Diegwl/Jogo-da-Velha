@@ -1,3 +1,6 @@
+from paho.mqtt import client as mqtt_client
+
+
 class Game:
     def __init__(self):
         """
@@ -5,6 +8,13 @@ class Game:
         :var: board
         :return: Jogo da Velha
         """
+        self.__broker = '10.21.160.16'
+        self.__port = 1883
+        self.__topic = "teste"
+        self.__client_id = f'diego-9090'
+        self.__username = 'diegol'
+        self.__password = '12345'
+        self.__client = self.connect_mqtt()
         self.__board = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
         print("-" * 20)
         print("JOGO DA VELHA")
@@ -22,12 +32,15 @@ class Game:
 
     def jogo(self):
         jogada = 0
+        linha = 0
+        coluna = 0
         while self.vencedor() == 0:
             print(f"\nJogador {jogada%2 + 1}")
             self.tabuleiro()
-            linha = int(input("\nLinha: "))
-            coluna = int(input("Coluna: "))
-
+            if jogada % 2 + 1 == 1:
+                linha, coluna = self.publish(self.__client)
+            else:
+                linha, coluna = self.subscribe(self.__client)
             if self.__board[linha-1][coluna-1] == 0:
                 if (jogada % 2 + 1) == 1:
                     self.__board[linha - 1][coluna - 1] = 1
@@ -70,59 +83,40 @@ class Game:
 
             print()
 
-"""
-    def extrato(self):
-        print("TITULAR:", self.__titular, "SALDO:", self.__saldo)
+    def connect_mqtt(self):
+        def on_connect(rc):
+            if rc == 0:
+                print("Connected to MQTT Broker!")
+            else:
+                print("Failed to connect, return code %d\n", rc)
 
-    def __pode_sacar(self, valor_saque: float):  # Abstração
-        if valor_saque > self.__saldo:
-            return False
-        return True
+        client = mqtt_client.Client(self.__client_id)
+        client.username_pw_set(self.__username, self.__password)
+        client.on_connect = on_connect
+        client.connect(self.__broker, self.__port)
+        return client
 
-    def sacar(self, valor: float):
-        if self.__pode_sacar(valor):
-            self.__saldo -= valor
-            print(f"VALOR SACADO: {valor} | NOVO EXTRATO: {self.__saldo}")
-        else:
-            print("O VALOR PASSOU DOS LIMITES")
+    def publish(self, client):
+        linha = int(input("\nLinha: "))
+        client.publish(self.__topic, linha)
+        coluna = int(input("Coluna: "))
+        client.publish(self.__topic, coluna)
+        return linha, coluna
 
-    def depositar(self, valor: float):
-        self.__saldo += valor
+    def subscribe(self, client: mqtt_client):
+        msg_count = 0
+        recebidos = []
+        while msg_count <= 2:
+            def on_message(msg):
+                print(f"Received `{msg.payload.decode()}` from `{msg.topic}` topic")
+                recebidos.append(msg.payload.decode())
+            client.subscribe(self.__topic)
+            client.on_message = on_message
+            msg_count += 1
+        linha = recebidos[0]
+        coluna = recebidos[1]
+        return linha, coluna
 
-    def tranferir(self, valor: float, destino):
-        self.sacar(valor)
-        destino.depositar(valor)
-        print(f"TRANSFERÊNCIA NO VALOR DE R${valor} DE '{self.__titular}' PARA '{destino.__titular}'")
-
-    @property
-    def limite(self):  # Abstração
-        return self.__limite
-
-    @limite.setter
-    def limite(self, valor):
-        if valor > 1.1 * self.__limite:
-            print("INFELIZMENTE O LIMITE ESTÁ ACIMA DE 10%")
-            print("LIMITE NÃO ALTERADO:", self.limite)
-        else:
-            self.__limite = valor
-            print("LIMITE ALTERADO COM SUCESSO")
-            print("NOVO VALOR:", self.limite)
-
-
-class Cliente:
-    def __init__(self, nome):
-        self.__nome = nome
-
-    @property  # Getter -> ele é acessado por uma funçãe e não um atributo.
-    def nome(self):
-        print("CHAMANDO GETTER NOME")
-        return self.__nome.title()
-
-    @nome.setter  # Setter -> altera um atributo do meu objeto.
-    def nome(self, nome):
-        print("CHAMANDO SETTER NOME")
-        self.__nome = nome
-"""
 
 if __name__ == '__main__':
     g1 = Game()
