@@ -70,6 +70,7 @@ class Game:
                         jogo_continua = 1
 
             except:
+                jogada = 0
                 self.set_board = 0
 
     def vencedor(self):
@@ -101,13 +102,16 @@ class Game:
         for i in range(3):
             for j in range(3):
                 if self.__board[i][j] == 0:
-                    print(" _ ", end=' ')
+                    print("   ", end=' ')
                 elif self.__board[i][j] == self.jog1:
                     print(" X ", end=' ')
                 elif self.__board[i][j] == self.jog2:
                     print(" O ", end=' ')
-
+                if j < 2:
+                    print(" | ", end=" ")
             print()
+            if i < 2:
+                print("--------------------")
 
     @property
     def matriz(self):
