@@ -35,7 +35,8 @@ class Game:
         :var: coluna int
         """
         jogada = 0
-        while self.vencedor() == 0:
+        jogo_continua = 0
+        while jogo_continua == 0:
             print(f"\nJogador {jogada % 2 + 1}")
             self.tabuleiro()
             linha = int(input("\nLinha: "))
@@ -44,9 +45,9 @@ class Game:
             try:
                 if self.__board[linha - 1][coluna - 1] == 0:
                     if (jogada % 2 + 1) == 1:
-                        self.__board[linha - 1][coluna - 1] = 1
+                        self.__board[linha - 1][coluna - 1] = self.jog1
                     else:
-                        self.__board[linha - 1][coluna - 1] = -1
+                        self.__board[linha - 1][coluna - 1] = self.jog2
                 else:
                     print("Não esta vazio")
                     jogada -= 1
@@ -59,7 +60,15 @@ class Game:
                     print("-" * 20)
                     self.tabuleiro()
                     print("-" * 20)
+                    jogo_continua = 1
                 jogada += 1
+                if not self.vencedor():
+                    if jogada == 9:
+                        print("-" * 20)
+                        print("O jogo deu velha")
+                        print("-" * 20)
+                        jogo_continua = 1
+
             except:
                 self.set_board = 0
 
